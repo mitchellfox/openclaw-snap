@@ -1,11 +1,11 @@
 // options.js — Settings page
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const config = await chrome.storage.sync.get(['gatewayHost', 'gatewayPort', 'gatewayToken', 'webhookUrl']);
+  const config = await chrome.storage.sync.get(['gatewayHost', 'gatewayPort', 'gatewayToken', 'channelId']);
   if (config.gatewayHost) document.getElementById('gatewayHost').value = config.gatewayHost;
   if (config.gatewayPort) document.getElementById('gatewayPort').value = config.gatewayPort;
   if (config.gatewayToken) document.getElementById('gatewayToken').value = config.gatewayToken;
-  if (config.webhookUrl) document.getElementById('webhookUrl').value = config.webhookUrl;
+  if (config.channelId) document.getElementById('channelId').value = config.channelId;
 
   document.getElementById('saveBtn').addEventListener('click', save);
   document.getElementById('testBtn').addEventListener('click', testConnection);
@@ -15,15 +15,16 @@ async function save() {
   const host = document.getElementById('gatewayHost').value.trim() || 'localhost';
   const port = document.getElementById('gatewayPort').value.trim() || '18789';
   const token = document.getElementById('gatewayToken').value.trim();
-  const webhookUrl = document.getElementById('webhookUrl').value.trim();
+  const channelId = document.getElementById('channelId').value.trim();
 
-  if (!webhookUrl) { showStatus('Webhook URL is required', 'err'); return; }
+  if (!token) { showStatus('Gateway token is required', 'err'); return; }
+  if (!channelId) { showStatus('Channel ID is required', 'err'); return; }
 
   await chrome.storage.sync.set({
     gatewayHost: host,
     gatewayPort: port,
     gatewayToken: token,
-    webhookUrl: webhookUrl
+    channelId: channelId
   });
   showStatus('✅ Settings saved!', 'success');
 }
