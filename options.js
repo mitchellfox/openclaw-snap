@@ -69,7 +69,7 @@ function testWsConnection(host, port, token) {
           type: 'req', id: '1', method: 'connect',
           params: {
             minProtocol: 3, maxProtocol: 3,
-            client: { id: 'gateway-client', version: '1.0.0', platform: 'chrome-extension', mode: 'backend' },
+            client: { id: 'cli', version: '1.0.0', platform: 'chrome-extension', mode: 'cli' },
             role: 'operator',
             scopes: ['operator.read', 'operator.write'],
             caps: [], commands: [], permissions: {},
@@ -171,7 +171,7 @@ function wsRpcCall(host, port, token, method, params) {
           type: 'req', id: 'auth', method: 'connect',
           params: {
             minProtocol: 3, maxProtocol: 3,
-            client: { id: 'gateway-client', version: '1.0.0', platform: 'chrome-extension', mode: 'backend' },
+            client: { id: 'cli', version: '1.0.0', platform: 'chrome-extension', mode: 'cli' },
             role: 'operator',
             scopes: ['operator.read', 'operator.write'],
             caps: [], commands: [], permissions: {},
