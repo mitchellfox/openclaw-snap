@@ -86,16 +86,11 @@
     </div>
 
     <div class="section">
-      <h2>🎯 Target Session</h2>
+      <h2>🎯 Delivery</h2>
       <div class="field">
-        <label>Session Key</label>
-        <input type="text" id="targetSession" placeholder="agent:kragg:discord:channel:1306917153924190230">
-        <div class="hint">The session where screenshots will be sent. Find this in the OpenClaw Control UI → Sessions tab.</div>
-      </div>
-      <div class="info-box" style="margin-top: 12px;">
-        <strong>How to find your session key:</strong><br>
-        Open the OpenClaw Control UI (<code>http://localhost:18789</code>) → look at active sessions. The key looks like:<br>
-        <code>agent:kragg:discord:channel:1306917153924190230</code>
+        <label>Discord Webhook URL</label>
+        <input type="url" id="webhookUrl" placeholder="https://discord.com/api/webhooks/...">
+        <div class="hint">Screenshots are sent to this Discord channel via webhook. Create one in Channel Settings → Integrations → Webhooks.</div>
       </div>
     </div>
 

@@ -300,46 +300,42 @@ function openAnnotator(tabId, imageDataUrl, context) {
 }
 
 async function sendToOpenClaw(imageData, context, notes) {
-  const config = await chrome.storage.sync.get(['gatewayHost', 'gatewayPort', 'gatewayToken', 'targetSession']);
+  const config = await chrome.storage.sync.get(['webhookUrl']);
 
-  if (!config.gatewayHost || !config.gatewayToken || !config.targetSession) {
-    console.error('OpenClaw not configured');
-    return { success: false, error: 'Not configured — open Settings first' };
+  if (!config.webhookUrl) {
+    console.error('OpenClaw Snap not configured');
+    return { success: false, error: 'Not configured — set Webhook URL in Settings' };
   }
 
-  const gatewayUrl = `http://${config.gatewayHost}:${config.gatewayPort || '18789'}`;
   const md = buildMarkdown(context, notes);
   const base64Data = imageData.split(',')[1];
 
-  try {
-    // Use OpenAI-compatible chat completions endpoint
-    // This uses Bearer token auth with no scope requirements
-    const body = {
-      model: 'openclaw',
-      user: config.targetSession,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: md },
-            { type: 'image_url', image_url: { url: `data:image/png;base64,${base64Data}` } }
-          ]
-        }
-      ]
-    };
+  // Convert base64 to blob for multipart upload
+  const binary = atob(base64Data);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const blob = new Blob([bytes], { type: 'image/png' });
 
-    const resp = await fetch(`${gatewayUrl}/v1/chat/completions`, {
+  try {
+    // Send via Discord webhook (multipart: message + image attachment)
+    const formData = new FormData();
+
+    // Discord webhook payload
+    const payload = {
+      content: md,
+      username: '📸 OpenClaw Snap'
+    };
+    formData.append('payload_json', JSON.stringify(payload));
+    formData.append('files[0]', blob, `screenshot-${Date.now()}.png`);
+
+    const resp = await fetch(config.webhookUrl, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${config.gatewayToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
+      body: formData
     });
 
     if (!resp.ok) {
       const text = await resp.text();
-      throw new Error(`HTTP ${resp.status}: ${text.substring(0, 200)}`);
+      throw new Error(`Discord webhook error ${resp.status}: ${text.substring(0, 200)}`);
     }
 
     return { success: true };
