@@ -1,11 +1,10 @@
 // options.js — Settings page
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const config = await chrome.storage.sync.get(['gatewayHost', 'gatewayPort', 'gatewayToken', 'channelId']);
+  const config = await chrome.storage.sync.get(['gatewayHost', 'gatewayPort', 'gatewayToken']);
   if (config.gatewayHost) document.getElementById('gatewayHost').value = config.gatewayHost;
   if (config.gatewayPort) document.getElementById('gatewayPort').value = config.gatewayPort;
   if (config.gatewayToken) document.getElementById('gatewayToken').value = config.gatewayToken;
-  if (config.channelId) document.getElementById('channelId').value = config.channelId;
 
   document.getElementById('saveBtn').addEventListener('click', save);
   document.getElementById('testBtn').addEventListener('click', testConnection);
@@ -15,18 +14,29 @@ async function save() {
   const host = document.getElementById('gatewayHost').value.trim() || 'localhost';
   const port = document.getElementById('gatewayPort').value.trim() || '18789';
   const token = document.getElementById('gatewayToken').value.trim();
-  const channelId = document.getElementById('channelId').value.trim();
 
   if (!token) { showStatus('Gateway token is required', 'err'); return; }
-  if (!channelId) { showStatus('Channel ID is required', 'err'); return; }
 
-  await chrome.storage.sync.set({
-    gatewayHost: host,
-    gatewayPort: port,
-    gatewayToken: token,
-    channelId: channelId
-  });
-  showStatus('✅ Settings saved!', 'success');
+  showStatus('🔧 Saving & running setup...', 'success');
+
+  await chrome.storage.sync.set({ gatewayHost: host, gatewayPort: port, gatewayToken: token });
+
+  // Run auto-setup on the relay (configures allowBots, webhook allowlisting, etc.)
+  try {
+    const relayPort = parseInt(port) + 1;
+    const resp = await fetch(`http://${host}:${relayPort}/setup`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      showStatus(`✅ Saved! ${data.message || 'Setup complete.'}`, 'success');
+    } else {
+      showStatus(`⚠️ Saved, but setup issue: ${data.error}`, 'err');
+    }
+  } catch (e) {
+    showStatus(`⚠️ Saved, but relay not reachable (${e.message}). Is snap-relay running?`, 'err');
+  }
 }
 
 async function testConnection() {
@@ -68,7 +78,21 @@ async function testConnection() {
       ws.onclose = (e) => { if (e.code !== 1000 && e.code !== 1005) { clearTimeout(timeout); resolve({ ok: false, error: 'Closed: ' + (e.reason || e.code) }); } };
     });
 
-    showStatus(result.ok ? `✅ Gateway connected (protocol v${result.protocol})` : `❌ ${result.error}`, result.ok ? 'success' : 'err');
+    // Also check relay
+    const relayPort = parseInt(port) + 1;
+    let relayOk = false;
+    try {
+      const relayResp = await fetch(`http://${host}:${relayPort}/health`);
+      relayOk = relayResp.ok;
+    } catch {}
+
+    if (result.ok && relayOk) {
+      showStatus(`✅ Gateway connected (v${result.protocol}) + Snap Relay running`, 'success');
+    } else if (result.ok) {
+      showStatus(`✅ Gateway connected, ⚠️ Snap Relay not running on port ${relayPort}`, 'err');
+    } else {
+      showStatus(`❌ ${result.error}`, 'err');
+    }
   } catch (e) {
     showStatus(`❌ ${e.message}`, 'err');
   }
@@ -79,5 +103,5 @@ function showStatus(msg, type) {
   const el = document.getElementById('statusMsg');
   el.textContent = msg;
   el.className = type;
-  if (type !== 'err') setTimeout(() => { el.style.display = 'none'; el.className = ''; }, 5000);
+  if (type !== 'err') setTimeout(() => { el.style.display = 'none'; el.className = ''; }, 8000);
 }
