@@ -307,111 +307,46 @@ async function sendToOpenClaw(imageData, context, notes) {
     return { success: false, error: 'Not configured — open Settings first' };
   }
 
+  const gatewayUrl = `http://${config.gatewayHost}:${config.gatewayPort || '18789'}`;
   const md = buildMarkdown(context, notes);
-  const base64 = imageData.split(',')[1]; // strip data:image/png;base64, prefix
+  const base64Data = imageData.split(',')[1];
 
   try {
-    const result = await wsRpcSend(
-      config.gatewayHost,
-      config.gatewayPort || '18789',
-      config.gatewayToken,
-      config.targetSession,
-      md,
-      base64
-    );
-    return result;
+    // Use OpenAI-compatible chat completions endpoint
+    // This uses Bearer token auth with no scope requirements
+    const body = {
+      model: 'openclaw',
+      user: config.targetSession,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: md },
+            { type: 'image_url', image_url: { url: `data:image/png;base64,${base64Data}` } }
+          ]
+        }
+      ]
+    };
+
+    const resp = await fetch(`${gatewayUrl}/v1/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${config.gatewayToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(`HTTP ${resp.status}: ${text.substring(0, 200)}`);
+    }
+
+    return { success: true };
   } catch (e) {
     console.error('Send failed:', e);
     return { success: false, error: e.message };
   }
-}
-
-// Open a temporary WS connection, auth, send chat.send RPC, close
-function wsRpcSend(host, port, token, sessionKey, message, imageBase64) {
-  return new Promise((resolve, reject) => {
-    const ws = new WebSocket(`ws://${host}:${port}`);
-    const timeout = setTimeout(() => {
-      ws.close();
-      reject(new Error('Send timeout (15s)'));
-    }, 15000);
-
-    let authed = false;
-
-    ws.onmessage = (evt) => {
-      let msg;
-      try { msg = JSON.parse(evt.data); } catch { return; }
-
-      // Handle challenge → auth
-      if (msg.type === 'event' && msg.event === 'connect.challenge' && !authed) {
-        ws.send(JSON.stringify({
-          type: 'req', id: 'auth', method: 'connect',
-          params: {
-            minProtocol: 3, maxProtocol: 3,
-            client: { id: 'cli', version: '1.0.0', platform: 'chrome-extension', mode: 'cli' },
-            role: 'operator', scopes: [],
-            caps: [], commands: [], permissions: {},
-            auth: { token },
-            locale: 'en-US',
-            userAgent: 'openclaw-snap/1.0.0'
-          }
-        }));
-        return;
-      }
-
-      // Auth response → send chat.send
-      if (msg.type === 'res' && msg.id === 'auth') {
-        if (!msg.ok) {
-          clearTimeout(timeout);
-          ws.close();
-          const err = typeof msg.error === 'string' ? msg.error
-            : msg.error?.message || JSON.stringify(msg.error);
-          reject(new Error('Auth failed: ' + err));
-          return;
-        }
-        authed = true;
-
-        // Build chat.send RPC
-        const chatSendParams = {
-          sessionKey: sessionKey,
-          message: message,
-          attachments: [{
-            type: 'image',
-            mimeType: 'image/png',
-            fileName: 'screenshot.png',
-            content: imageBase64
-          }]
-        };
-
-        ws.send(JSON.stringify({
-          type: 'req', id: 'send', method: 'chat.send',
-          params: chatSendParams
-        }));
-        return;
-      }
-
-      // chat.send response
-      if (msg.type === 'res' && msg.id === 'send') {
-        clearTimeout(timeout);
-        ws.close();
-        if (msg.ok) {
-          resolve({ success: true });
-        } else {
-          const err = typeof msg.error === 'string' ? msg.error
-            : msg.error?.message || JSON.stringify(msg.error);
-          reject(new Error(err));
-        }
-      }
-    };
-
-    ws.onerror = () => {
-      clearTimeout(timeout);
-      reject(new Error('WebSocket connection failed'));
-    };
-
-    ws.onclose = (e) => {
-      clearTimeout(timeout);
-    };
-  });
 }
 
 function buildMarkdown(ctx, notes) {
