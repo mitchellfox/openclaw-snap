@@ -1,0 +1,1 @@
+// Content script: would handle area selection and console capture in full implementation.

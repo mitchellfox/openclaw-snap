@@ -1,0 +1,1 @@
+OpenClaw Snap - MVP scaffold. This is a starting structure for a Chrome MV3 extension. Further implementation needed for full feature set.
