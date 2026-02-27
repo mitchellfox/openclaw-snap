@@ -72,13 +72,13 @@ function connect() {
           minProtocol: 3,
           maxProtocol: 3,
           client: {
-            id: 'openclaw-snap',
+            id: 'openclaw-control-ui',
             version: '1.0.0',
             platform: 'chrome-extension',
             mode: 'operator'
           },
           role: 'operator',
-          scopes: ['operator.read'],
+          scopes: ['operator.read', 'operator.write'],
           caps: [],
           commands: [],
           permissions: {},
@@ -88,13 +88,16 @@ function connect() {
         }
       };
       pendingCallbacks[connectReq.id] = (res) => {
+        console.log('Connect response:', JSON.stringify(res));
         if (res.ok) {
           setConnStatus('connected', `Connected (protocol ${res.payload?.protocol || '?'})`);
           document.getElementById('connectBtn').disabled = false;
           document.getElementById('connectBtn').textContent = '🔄 Reconnect';
           fetchSessions();
         } else {
-          setConnStatus('error', `Auth failed: ${res.error || 'unknown'}`);
+          const errMsg = typeof res.error === 'string' ? res.error
+            : res.error?.message || res.error?.code || res.payload?.message || JSON.stringify(res.error || res.payload);
+          setConnStatus('error', `Auth failed: ${errMsg}`);
           document.getElementById('connectBtn').disabled = false;
         }
       };
