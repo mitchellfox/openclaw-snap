@@ -45,21 +45,27 @@ function gwConnect(host, port, token) {
     gwDisconnect();
 
     const wsUrl = `ws://${host}:${port}`;
+    console.log('[Snap] Connecting to', wsUrl);
     try {
       gwWs = new WebSocket(wsUrl);
     } catch (e) {
+      console.error('[Snap] WebSocket create failed:', e);
       reject(new Error('Failed to create WebSocket: ' + e.message));
       return;
     }
 
     const timeout = setTimeout(() => {
+      console.error('[Snap] Connection timeout after 10s');
       gwDisconnect();
       reject(new Error('Connection timeout'));
     }, 10000);
 
-    gwWs.onopen = () => {};
+    gwWs.onopen = () => {
+      console.log('[Snap] WebSocket opened, waiting for challenge...');
+    };
 
     gwWs.onmessage = (evt) => {
+      console.log('[Snap] WS message:', evt.data.substring(0, 200));
       let msg;
       try { msg = JSON.parse(evt.data); } catch { return; }
 
@@ -102,13 +108,15 @@ function gwConnect(host, port, token) {
       }
     };
 
-    gwWs.onerror = () => {
+    gwWs.onerror = (e) => {
+      console.error('[Snap] WebSocket error:', e);
       clearTimeout(timeout);
       gwDisconnect();
       reject(new Error('WebSocket connection failed'));
     };
 
-    gwWs.onclose = () => {
+    gwWs.onclose = (e) => {
+      console.log('[Snap] WebSocket closed:', e.code, e.reason);
       gwConnected = false;
     };
   });
