@@ -14,8 +14,7 @@ Contextual screenshots with annotation for OpenClaw agentic workflows. Take a sc
 1. Click the extension icon → ⚙️ Settings
 2. Enter your OpenClaw gateway URL (default: `http://localhost:18789`)
 3. Enter your gateway token
-4. Enter target session key (e.g., `agent:your-agent:discord:channel:YOUR_CHANNEL_ID`)
-5. Click **Test Connection** to verify, then **Save**
+4. Click **Save & Setup** — channels are auto-detected
 
 ## Usage
 
