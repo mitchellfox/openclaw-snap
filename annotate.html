@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>OpenClaw Snap — Annotate</title>
+  <link rel="stylesheet" href="annotate.css">
+</head>
+<body>
+  <!-- Toolbar -->
+  <div id="toolbar">
+    <div class="toolbar-group">
+      <button class="tool-btn active" data-tool="select" title="Select/Move">
+        <span>↖</span>
+      </button>
+      <button class="tool-btn" data-tool="rect" title="Rectangle">
+        <span>▢</span>
+      </button>
+      <button class="tool-btn" data-tool="arrow" title="Arrow">
+        <span>→</span>
+      </button>
+      <button class="tool-btn" data-tool="text" title="Text">
+        <span>T</span>
+      </button>
+    </div>
+    <div class="toolbar-divider"></div>
+    <div class="toolbar-group">
+      <input type="color" id="colorPicker" value="#ff3b3b" title="Color">
+      <select id="strokeWidth" title="Stroke width">
+        <option value="2">Thin</option>
+        <option value="3" selected>Medium</option>
+        <option value="5">Thick</option>
+      </select>
+    </div>
+    <div class="toolbar-divider"></div>
+    <div class="toolbar-group">
+      <button class="tool-btn" id="undoBtn" title="Undo">↩</button>
+      <button class="tool-btn" id="clearBtn" title="Clear All">✕</button>
+      <button class="tool-btn" id="deleteBtn" title="Delete Selected">🗑</button>
+    </div>
+    <div class="toolbar-spacer"></div>
+    <div class="toolbar-group">
+      <button class="action-btn cancel" id="cancelBtn">Cancel</button>
+      <button class="action-btn send" id="sendBtn">📤 Send to OpenClaw</button>
+    </div>
+  </div>
+
+  <!-- Notes panel -->
+  <div id="notesPanel">
+    <div class="notes-header">
+      <span>Notes (optional)</span>
+      <button id="voiceBtn" class="voice-btn" title="Voice-to-text">🎤</button>
+    </div>
+    <textarea id="notesInput" placeholder="Describe what you want changed..."></textarea>
+    <div id="voiceStatus" class="voice-status"></div>
+  </div>
+
+  <!-- Canvas area -->
+  <div id="canvasContainer">
+    <canvas id="bgCanvas"></canvas>
+    <canvas id="drawCanvas"></canvas>
+  </div>
+
+  <!-- Send status -->
+  <div id="sendStatus" class="send-status hidden"></div>
+
+  <script src="annotate.js"></script>
+</body>
+</html>
