@@ -75,7 +75,7 @@ function connect() {
             id: 'openclaw-control-ui',
             version: '1.0.0',
             platform: 'chrome-extension',
-            mode: 'operator'
+            mode: 'ui'
           },
           role: 'operator',
           scopes: ['operator.read', 'operator.write'],
