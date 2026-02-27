@@ -2,10 +2,10 @@
 
 document.addEventListener('DOMContentLoaded', async () => {
   // Check config status
-  const config = await chrome.storage.sync.get(['gatewayUrl', 'gatewayToken', 'targetSession']);
+  const config = await chrome.storage.sync.get(['gatewayHost', 'gatewayPort', 'gatewayToken', 'targetSession']);
   const statusEl = document.getElementById('status');
 
-  if (config.gatewayUrl && config.gatewayToken && config.targetSession) {
+  if (config.gatewayHost && config.gatewayToken && config.targetSession) {
     statusEl.className = 'status connected';
     statusEl.textContent = '✅ Connected to OpenClaw';
   }

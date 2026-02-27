@@ -161,12 +161,13 @@ function openAnnotator(tabId, imageDataUrl, context) {
 }
 
 async function sendToOpenClaw(imageData, context, notes) {
-  const config = await chrome.storage.sync.get(['gatewayUrl', 'gatewayToken', 'targetSession']);
+  const config = await chrome.storage.sync.get(['gatewayHost', 'gatewayPort', 'gatewayToken', 'targetSession']);
 
-  if (!config.gatewayUrl || !config.gatewayToken || !config.targetSession) {
+  if (!config.gatewayHost || !config.gatewayToken || !config.targetSession) {
     console.error('OpenClaw not configured');
-    return { success: false, error: 'Not configured' };
+    return { success: false, error: 'Not configured — open Settings first' };
   }
+  const gatewayUrl = `http://${config.gatewayHost}:${config.gatewayPort || '18789'}`;
 
   // Build markdown context
   const md = buildMarkdown(context, notes);
@@ -184,7 +185,7 @@ async function sendToOpenClaw(imageData, context, notes) {
   formData.append('media', blob, 'screenshot.png');
 
   try {
-    const url = `${config.gatewayUrl}/api/sessions/${encodeURIComponent(config.targetSession)}/message`;
+    const url = `${gatewayUrl}/api/sessions/${encodeURIComponent(config.targetSession)}/message`;
     const resp = await fetch(url, {
       method: 'POST',
       headers: {
