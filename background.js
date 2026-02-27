@@ -1,5 +1,10 @@
 // background.js — OpenClaw Snap service worker
 
+// Keep service worker alive during WS connections
+chrome.runtime.onInstalled.addListener(() => {
+  console.log('[Snap] Extension installed/updated');
+});
+
 // Gateway WebSocket state
 let gwWs = null;
 let gwConnected = false;

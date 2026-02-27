@@ -45,7 +45,9 @@ async function connect() {
   document.getElementById('connectBtn').disabled = true;
 
   try {
+    console.log('[Snap Options] Attempting connect to', host, port);
     const result = await sendToBg({ action: 'gwConnect', host, port, token });
+    console.log('[Snap Options] Connect result:', result);
     if (result.ok) {
       setConnStatus('connected', `Connected (protocol ${result.protocol || '?'})`);
       document.getElementById('connectBtn').textContent = '🔄 Reconnect';
@@ -54,6 +56,7 @@ async function connect() {
       setConnStatus('error', result.error || 'Connection failed');
     }
   } catch (e) {
+    console.error('[Snap Options] Connect error:', e);
     setConnStatus('error', e.message || 'Connection failed');
   }
   document.getElementById('connectBtn').disabled = false;
@@ -111,9 +114,21 @@ async function fetchSessions() {
 
 function sendToBg(msg) {
   return new Promise((resolve) => {
-    chrome.runtime.sendMessage(msg, (response) => {
-      resolve(response || { ok: false, error: 'No response from background' });
-    });
+    console.log('[Snap Options] Sending to bg:', msg.action);
+    try {
+      chrome.runtime.sendMessage(msg, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('[Snap Options] sendMessage error:', chrome.runtime.lastError);
+          resolve({ ok: false, error: chrome.runtime.lastError.message });
+          return;
+        }
+        console.log('[Snap Options] Got response:', response);
+        resolve(response || { ok: false, error: 'No response from background' });
+      });
+    } catch (e) {
+      console.error('[Snap Options] sendMessage threw:', e);
+      resolve({ ok: false, error: e.message });
+    }
   });
 }
 
