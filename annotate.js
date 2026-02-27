@@ -301,20 +301,28 @@ function createTextInput(x, y, existingText, editIndex) {
   if (textInput) textInput.remove();
 
   const container = document.getElementById('canvasContainer');
-  const rect = drawCanvas.getBoundingClientRect();
+  const canvasRect = drawCanvas.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
   const scale = drawCanvas._scale || 1;
+
+  // Position relative to the container, accounting for canvas offset within container
+  const screenX = canvasRect.left - containerRect.left + (x / scale);
+  const screenY = canvasRect.top - containerRect.top + (y / scale) - 10;
 
   const input = document.createElement('input');
   input.className = 'text-input-overlay';
   input.type = 'text';
   input.value = existingText || '';
-  input.style.left = (rect.left - container.getBoundingClientRect().left + x / scale) + 'px';
-  input.style.top = (rect.top - container.getBoundingClientRect().top + y / scale - 10) + 'px';
+  input.style.left = screenX + 'px';
+  input.style.top = screenY + 'px';
   input.style.color = currentColor;
-  input.style.fontSize = '16px';
+  input.style.fontSize = (16 / scale) + 'px';
 
+  container.style.position = 'relative'; // ensure positioned parent
   container.appendChild(input);
-  input.focus();
+
+  // Small delay to prevent the click from immediately blurring
+  setTimeout(() => input.focus(), 50);
   textInput = input;
 
   const commit = () => {
