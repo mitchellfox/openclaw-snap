@@ -25,80 +25,49 @@
       display: block; font-size: 12px; font-weight: 600; color: #aaa;
       margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;
     }
-    input, select {
+    input {
       width: 100%; padding: 10px 12px; background: #252545;
       border: 1px solid #333; border-radius: 8px; color: #e0e0e0;
       font-size: 14px; font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
     }
-    input:focus, select:focus { outline: none; border-color: #4040a0; }
-    select { cursor: pointer; }
-    select:disabled { opacity: 0.5; cursor: not-allowed; }
+    input:focus { outline: none; border-color: #4040a0; }
     .hint { font-size: 11px; color: #666; margin-top: 4px; }
+    .hint code { background: #252545; padding: 1px 4px; border-radius: 3px; font-size: 10px; }
     .btn {
       padding: 10px 20px; border: none; border-radius: 8px;
       font-size: 14px; font-weight: 600; cursor: pointer;
     }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-connect { background: #4040a0; color: #fff; }
-    .btn-connect:hover:not(:disabled) { background: #5050c0; }
     .btn-save { background: #4ade80; color: #111; }
     .btn-save:hover:not(:disabled) { background: #22c55e; }
+    .btn-test { background: #4040a0; color: #fff; margin-left: 8px; }
+    .btn-test:hover:not(:disabled) { background: #5050c0; }
     .actions { display: flex; gap: 8px; margin-top: 20px; }
     .section {
       border: 1px solid #2a2a4a; border-radius: 12px;
       padding: 20px; margin-bottom: 20px; background: #16162e;
     }
     .section h2 { font-size: 14px; color: #fff; margin-bottom: 16px; }
-    .connection-status {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 12px; border-radius: 8px; font-size: 13px;
-      margin-bottom: 16px;
-    }
-    .connection-status.idle { background: #252545; color: #888; }
-    .connection-status.connecting { background: #1a1a3a; color: #60a5fa; }
-    .connection-status.connected { background: #1a3a2a; color: #4ade80; }
-    .connection-status.error { background: #3a1a1a; color: #f87171; }
-    .dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      display: inline-block; flex-shrink: 0;
-    }
-    .idle .dot { background: #555; }
-    .connecting .dot { background: #60a5fa; animation: pulse 1s infinite; }
-    .connected .dot { background: #4ade80; }
-    .error .dot { background: #f87171; }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-    .session-item {
-      padding: 8px 12px; border-radius: 6px; background: #252545;
-      margin-bottom: 6px; display: flex; align-items: center; gap: 8px;
-      cursor: pointer; border: 2px solid transparent; transition: all 0.15s;
-    }
-    .session-item:hover { border-color: #4040a0; }
-    .session-item.selected { border-color: #4ade80; background: #1a3a2a; }
-    .session-item .agent { font-weight: 600; font-size: 13px; }
-    .session-item .key { font-size: 11px; color: #666; font-family: monospace; }
-    .session-item .channel { font-size: 11px; color: #888; }
-    #sessionList { max-height: 300px; overflow-y: auto; }
-    .empty-sessions { text-align: center; color: #666; padding: 20px; font-size: 13px; }
     #statusMsg {
       margin-top: 12px; padding: 8px 12px; border-radius: 6px;
       font-size: 13px; display: none;
     }
     .success { display: block !important; background: #1a3a2a; color: #4ade80; }
     .err { display: block !important; background: #3a1a1a; color: #f87171; }
+    .info-box {
+      background: #1a1a3a; border: 1px solid #2a2a5a; border-radius: 8px;
+      padding: 12px; font-size: 12px; color: #999; line-height: 1.6;
+    }
+    .info-box strong { color: #ccc; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>📸 OpenClaw Snap Settings</h1>
-    <p class="subtitle">Connect to your OpenClaw gateway and choose a target session.</p>
+    <p class="subtitle">Connect to your OpenClaw gateway to send contextual screenshots to your agent.</p>
 
-    <!-- Connection Section -->
     <div class="section">
       <h2>🔌 Gateway Connection</h2>
-      <div id="connStatus" class="connection-status idle">
-        <span class="dot"></span>
-        <span>Not connected</span>
-      </div>
       <div class="row">
         <div class="field">
           <label>Gateway Host</label>
@@ -112,22 +81,27 @@
       <div class="field">
         <label>Gateway Token</label>
         <input type="password" id="gatewayToken" placeholder="Enter your gateway token">
-        <div class="hint">Found in your openclaw.json → gateway.token</div>
+        <div class="hint">Found in <code>openclaw.json</code> → <code>gateway.auth.token</code></div>
       </div>
-      <button class="btn btn-connect" id="connectBtn">🔌 Connect</button>
     </div>
 
-    <!-- Session Selection -->
-    <div class="section" id="sessionSection" style="opacity: 0.5; pointer-events: none;">
+    <div class="section">
       <h2>🎯 Target Session</h2>
-      <p class="hint" style="margin-bottom: 12px;">Select where screenshots will be sent:</p>
-      <div id="sessionList">
-        <div class="empty-sessions">Connect to gateway first</div>
+      <div class="field">
+        <label>Session Key</label>
+        <input type="text" id="targetSession" placeholder="agent:kragg:discord:channel:1306917153924190230">
+        <div class="hint">The session where screenshots will be sent. Find this in the OpenClaw Control UI → Sessions tab.</div>
+      </div>
+      <div class="info-box" style="margin-top: 12px;">
+        <strong>How to find your session key:</strong><br>
+        Open the OpenClaw Control UI (<code>http://localhost:18789</code>) → look at active sessions. The key looks like:<br>
+        <code>agent:kragg:discord:channel:1306917153924190230</code>
       </div>
     </div>
 
     <div class="actions">
-      <button class="btn btn-save" id="saveBtn" disabled>💾 Save Settings</button>
+      <button class="btn btn-save" id="saveBtn">💾 Save Settings</button>
+      <button class="btn btn-test" id="testBtn">🔌 Test Connection</button>
     </div>
 
     <div id="statusMsg"></div>
