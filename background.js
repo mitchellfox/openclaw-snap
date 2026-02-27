@@ -94,7 +94,7 @@ function gwConnect(host, port, token) {
           type: 'req', id, method: 'connect',
           params: {
             minProtocol: 3, maxProtocol: 3,
-            client: { id: 'openclaw-control-ui', version: '1.0.0', platform: 'chrome-extension', mode: 'ui' },
+            client: { id: 'gateway-client', version: '1.0.0', platform: 'chrome-extension', mode: 'backend' },
             role: 'operator',
             scopes: ['operator.read', 'operator.write'],
             caps: [], commands: [], permissions: {},
