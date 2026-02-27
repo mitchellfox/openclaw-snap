@@ -1,20 +1,14 @@
-// options.js — Settings page with WS-based session discovery
+// options.js — Settings page (delegates all gateway comms to background service worker)
 
-let ws = null;
-let pendingCallbacks = {};
-let rpcId = 0;
 let selectedSession = null;
-let sessions = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Load saved config
   const config = await chrome.storage.sync.get(['gatewayHost', 'gatewayPort', 'gatewayToken', 'targetSession']);
   if (config.gatewayHost) document.getElementById('gatewayHost').value = config.gatewayHost;
   if (config.gatewayPort) document.getElementById('gatewayPort').value = config.gatewayPort;
   if (config.gatewayToken) document.getElementById('gatewayToken').value = config.gatewayToken;
   selectedSession = config.targetSession || null;
 
-  // If we have saved credentials, auto-connect
   if (config.gatewayHost && config.gatewayToken) {
     connect();
   }
@@ -40,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
-function connect() {
+async function connect() {
   const host = document.getElementById('gatewayHost').value.trim() || 'localhost';
   const port = document.getElementById('gatewayPort').value.trim() || '18789';
   const token = document.getElementById('gatewayToken').value.trim();
@@ -50,101 +44,19 @@ function connect() {
   setConnStatus('connecting', 'Connecting...');
   document.getElementById('connectBtn').disabled = true;
 
-  if (ws) { try { ws.close(); } catch(e) {} }
-
-  ws = new WebSocket(`ws://${host}:${port}`);
-
-  ws.onopen = () => {
-    // Wait for challenge
-  };
-
-  ws.onmessage = (evt) => {
-    let msg;
-    try { msg = JSON.parse(evt.data); } catch(e) { return; }
-
-    // Handle challenge
-    if (msg.type === 'event' && msg.event === 'connect.challenge') {
-      const connectReq = {
-        type: 'req',
-        id: String(++rpcId),
-        method: 'connect',
-        params: {
-          minProtocol: 3,
-          maxProtocol: 3,
-          client: {
-            id: 'openclaw-control-ui',
-            version: '1.0.0',
-            platform: 'chrome-extension',
-            mode: 'ui'
-          },
-          role: 'operator',
-          scopes: ['operator.read', 'operator.write'],
-          caps: [],
-          commands: [],
-          permissions: {},
-          auth: { token },
-          locale: navigator.language,
-          userAgent: 'openclaw-snap/1.0.0'
-        }
-      };
-      pendingCallbacks[connectReq.id] = (res) => {
-        console.log('Connect response:', JSON.stringify(res));
-        if (res.ok) {
-          setConnStatus('connected', `Connected (protocol ${res.payload?.protocol || '?'})`);
-          document.getElementById('connectBtn').disabled = false;
-          document.getElementById('connectBtn').textContent = '🔄 Reconnect';
-          fetchSessions();
-        } else {
-          const errMsg = typeof res.error === 'string' ? res.error
-            : res.error?.message || res.error?.code || res.payload?.message || JSON.stringify(res.error || res.payload);
-          setConnStatus('error', `Auth failed: ${errMsg}`);
-          document.getElementById('connectBtn').disabled = false;
-        }
-      };
-      ws.send(JSON.stringify(connectReq));
-      return;
+  try {
+    const result = await sendToBg({ action: 'gwConnect', host, port, token });
+    if (result.ok) {
+      setConnStatus('connected', `Connected (protocol ${result.protocol || '?'})`);
+      document.getElementById('connectBtn').textContent = '🔄 Reconnect';
+      fetchSessions();
+    } else {
+      setConnStatus('error', result.error || 'Connection failed');
     }
-
-    // Handle RPC responses
-    if (msg.type === 'res' && msg.id && pendingCallbacks[msg.id]) {
-      pendingCallbacks[msg.id](msg);
-      delete pendingCallbacks[msg.id];
-    }
-  };
-
-  ws.onerror = () => {
-    setConnStatus('error', 'Connection failed');
-    document.getElementById('connectBtn').disabled = false;
-  };
-
-  ws.onclose = () => {
-    if (document.getElementById('connStatus').className.includes('connecting')) {
-      setConnStatus('error', 'Connection closed');
-      document.getElementById('connectBtn').disabled = false;
-    }
-  };
-}
-
-function rpcCall(method, params) {
-  return new Promise((resolve, reject) => {
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-      reject(new Error('Not connected'));
-      return;
-    }
-    const id = String(++rpcId);
-    const req = { type: 'req', id, method, params };
-    pendingCallbacks[id] = (res) => {
-      if (res.ok) resolve(res.payload || res);
-      else reject(new Error(res.error || 'RPC error'));
-    };
-    ws.send(JSON.stringify(req));
-    setTimeout(() => {
-      if (pendingCallbacks[id]) {
-        delete pendingCallbacks[id];
-        reject(new Error('Timeout'));
-      }
-    }, 10000);
-  });
+  } catch (e) {
+    setConnStatus('error', e.message || 'Connection failed');
+  }
+  document.getElementById('connectBtn').disabled = false;
 }
 
 async function fetchSessions() {
@@ -156,8 +68,11 @@ async function fetchSessions() {
   listEl.innerHTML = '<div class="empty-sessions">Loading sessions...</div>';
 
   try {
-    const result = await rpcCall('sessions.list', { messageLimit: 0 });
-    sessions = result.sessions || result || [];
+    const result = await sendToBg({ action: 'gwListSessions' });
+    if (!result.ok) throw new Error(result.error || 'Failed to list sessions');
+
+    const payload = result.payload;
+    const sessions = payload.sessions || payload || [];
 
     if (!Array.isArray(sessions) || sessions.length === 0) {
       listEl.innerHTML = '<div class="empty-sessions">No active sessions found</div>';
@@ -194,8 +109,15 @@ async function fetchSessions() {
   }
 }
 
+function sendToBg(msg) {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage(msg, (response) => {
+      resolve(response || { ok: false, error: 'No response from background' });
+    });
+  });
+}
+
 function extractChannel(key) {
-  // e.g. "agent:kragg:discord:channel:123" → "discord #channel"
   const parts = key.split(':');
   if (parts.length >= 4) {
     return `${parts[2]} ${parts[3] === 'channel' ? '#' : ''}${parts.slice(3).join(':')}`;

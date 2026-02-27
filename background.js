@@ -1,5 +1,12 @@
 // background.js — OpenClaw Snap service worker
 
+// Gateway WebSocket state
+let gwWs = null;
+let gwConnected = false;
+let gwPendingRpc = {};
+let gwRpcId = 0;
+let gwConnectResolve = null;
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.action === 'captureVisible') {
     captureVisible(msg.tabId);
@@ -13,10 +20,129 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     sendToOpenClaw(msg.imageData, msg.context, msg.notes)
       .then(result => sendResponse(result))
       .catch(e => sendResponse({ success: false, error: e.message }));
-    return true; // keep channel open for async response
+    return true;
+  } else if (msg.action === 'gwConnect') {
+    gwConnect(msg.host, msg.port, msg.token)
+      .then(result => sendResponse(result))
+      .catch(e => sendResponse({ ok: false, error: e.message }));
+    return true;
+  } else if (msg.action === 'gwListSessions') {
+    gwRpcCall('sessions.list', { messageLimit: 0 })
+      .then(result => sendResponse({ ok: true, payload: result }))
+      .catch(e => sendResponse({ ok: false, error: e.message }));
+    return true;
+  } else if (msg.action === 'gwDisconnect') {
+    gwDisconnect();
+    sendResponse({ ok: true });
   }
   return true;
 });
+
+// --- Gateway WebSocket (runs in service worker, no origin issues) ---
+
+function gwConnect(host, port, token) {
+  return new Promise((resolve, reject) => {
+    gwDisconnect();
+
+    const wsUrl = `ws://${host}:${port}`;
+    try {
+      gwWs = new WebSocket(wsUrl);
+    } catch (e) {
+      reject(new Error('Failed to create WebSocket: ' + e.message));
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      gwDisconnect();
+      reject(new Error('Connection timeout'));
+    }, 10000);
+
+    gwWs.onopen = () => {};
+
+    gwWs.onmessage = (evt) => {
+      let msg;
+      try { msg = JSON.parse(evt.data); } catch { return; }
+
+      // Handle challenge
+      if (msg.type === 'event' && msg.event === 'connect.challenge') {
+        const id = String(++gwRpcId);
+        gwPendingRpc[id] = (res) => {
+          clearTimeout(timeout);
+          if (res.ok) {
+            gwConnected = true;
+            resolve({ ok: true, protocol: res.payload?.protocol });
+          } else {
+            gwDisconnect();
+            const errMsg = typeof res.error === 'string' ? res.error
+              : res.error?.message || res.error?.code || res.payload?.message
+              || JSON.stringify(res.error || res.payload);
+            reject(new Error(errMsg));
+          }
+        };
+        gwWs.send(JSON.stringify({
+          type: 'req', id, method: 'connect',
+          params: {
+            minProtocol: 3, maxProtocol: 3,
+            client: { id: 'openclaw-control-ui', version: '1.0.0', platform: 'chrome-extension', mode: 'ui' },
+            role: 'operator',
+            scopes: ['operator.read', 'operator.write'],
+            caps: [], commands: [], permissions: {},
+            auth: { token },
+            locale: 'en-US',
+            userAgent: 'openclaw-snap/1.0.0'
+          }
+        }));
+        return;
+      }
+
+      // Handle RPC responses
+      if (msg.type === 'res' && msg.id && gwPendingRpc[msg.id]) {
+        gwPendingRpc[msg.id](msg);
+        delete gwPendingRpc[msg.id];
+      }
+    };
+
+    gwWs.onerror = () => {
+      clearTimeout(timeout);
+      gwDisconnect();
+      reject(new Error('WebSocket connection failed'));
+    };
+
+    gwWs.onclose = () => {
+      gwConnected = false;
+    };
+  });
+}
+
+function gwDisconnect() {
+  gwConnected = false;
+  gwPendingRpc = {};
+  if (gwWs) {
+    try { gwWs.close(); } catch {}
+    gwWs = null;
+  }
+}
+
+function gwRpcCall(method, params) {
+  return new Promise((resolve, reject) => {
+    if (!gwWs || gwWs.readyState !== WebSocket.OPEN || !gwConnected) {
+      reject(new Error('Not connected to gateway'));
+      return;
+    }
+    const id = String(++gwRpcId);
+    gwPendingRpc[id] = (res) => {
+      if (res.ok) resolve(res.payload || res);
+      else reject(new Error(typeof res.error === 'string' ? res.error : JSON.stringify(res.error)));
+    };
+    gwWs.send(JSON.stringify({ type: 'req', id, method, params }));
+    setTimeout(() => {
+      if (gwPendingRpc[id]) {
+        delete gwPendingRpc[id];
+        reject(new Error('RPC timeout'));
+      }
+    }, 10000);
+  });
+}
 
 async function captureVisible(tabId) {
   try {
