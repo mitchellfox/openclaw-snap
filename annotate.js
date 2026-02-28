@@ -106,8 +106,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('sendBtn').addEventListener('click', sendScreenshot);
 
-  // Voice-to-text
-  setupVoice();
 });
 
 function setupCanvas(w, h) {
@@ -420,69 +418,6 @@ function drawArrow(ctx, x1, y1, x2, y2, color, width) {
   ctx.fill();
 }
 
-// Voice-to-text
-function setupVoice() {
-  const btn = document.getElementById('voiceBtn');
-  const status = document.getElementById('voiceStatus');
-  const notesInput = document.getElementById('notesInput');
-
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    btn.style.display = 'none';
-    return;
-  }
-
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let recognition = null;
-  let isRecording = false;
-
-  btn.addEventListener('click', () => {
-    if (isRecording) {
-      recognition.stop();
-      return;
-    }
-
-    recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    let finalTranscript = notesInput.value;
-    if (finalTranscript && !finalTranscript.endsWith(' ')) finalTranscript += ' ';
-
-    recognition.onstart = () => {
-      isRecording = true;
-      btn.classList.add('recording');
-      status.textContent = '🔴 Listening...';
-    };
-
-    recognition.onresult = (e) => {
-      let interim = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) {
-          finalTranscript += e.results[i][0].transcript;
-        } else {
-          interim += e.results[i][0].transcript;
-        }
-      }
-      notesInput.value = finalTranscript + interim;
-    };
-
-    recognition.onend = () => {
-      isRecording = false;
-      btn.classList.remove('recording');
-      status.textContent = '';
-      notesInput.value = finalTranscript;
-    };
-
-    recognition.onerror = (e) => {
-      isRecording = false;
-      btn.classList.remove('recording');
-      status.textContent = '⚠️ ' + e.error;
-    };
-
-    recognition.start();
-  });
-}
 
 // Send to OpenClaw
 async function sendScreenshot() {

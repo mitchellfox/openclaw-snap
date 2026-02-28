@@ -202,42 +202,8 @@ body {
   color: var(--text-tertiary);
 }
 
-.voice-btn {
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text-tertiary);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.voice-btn:hover {
-  background: var(--bg-elevated);
-  color: var(--text-secondary);
-  border-color: var(--border-hover);
-}
-.voice-btn.recording {
-  background: var(--danger-bg);
-  border-color: var(--danger);
-  color: var(--danger);
-  animation: pulse 1.2s ease-in-out infinite;
-}
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
 
-.voice-status {
-  font-size: 11px;
-  color: var(--text-tertiary);
-  margin-top: 4px;
-  min-height: 16px;
-}
 
 #notesInput {
   width: 100%;
