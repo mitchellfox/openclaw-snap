@@ -40,6 +40,17 @@ Contextual screenshots with annotation for OpenClaw agentic workflows. Take a sc
   - Console errors (last 20)
   - Timestamp
 
+## Architecture
+
+```
+Chrome Extension  →  Snap Relay (localhost)  →  openclaw CLI  →  Discord
+   (capture)          (saves + sends)          (components v2)    (channel)
+```
+
+The extension captures screenshots and sends them to a local relay server. The relay saves the image and uses the `openclaw` CLI to deliver a rich component message to the target Discord channel.
+
+See [`relay/README.md`](relay/README.md) for relay setup.
+
 ## Files
 
 | File | Purpose |
@@ -51,3 +62,4 @@ Contextual screenshots with annotation for OpenClaw agentic workflows. Take a sc
 | `area-select.js` | Area selection overlay (injected on demand) |
 | `annotate.html/js/css` | Full annotation editor |
 | `options.html/js` | Settings page |
+| `relay/snap-relay.js` | Local HTTP relay server |
