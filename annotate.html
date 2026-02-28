@@ -3,54 +3,83 @@
 <head>
   <meta charset="utf-8">
   <title>OpenClaw Snap — Annotate</title>
+  <link rel="stylesheet" href="lib/phosphor.css">
   <link rel="stylesheet" href="annotate.css">
 </head>
 <body>
   <!-- Toolbar -->
   <div id="toolbar">
-    <div class="toolbar-group">
-      <button class="tool-btn active" data-tool="select" title="Select/Move">
-        <span>↖</span>
+    <div class="toolbar-group tools">
+      <button class="tool-btn active" data-tool="select" title="Select / Move (V)">
+        <i class="ph ph-cursor"></i>
       </button>
-      <button class="tool-btn" data-tool="rect" title="Rectangle">
-        <span>▢</span>
+      <button class="tool-btn" data-tool="rect" title="Rectangle (R)">
+        <i class="ph ph-rectangle"></i>
       </button>
-      <button class="tool-btn" data-tool="arrow" title="Arrow">
-        <span>→</span>
+      <button class="tool-btn" data-tool="arrow" title="Arrow (A)">
+        <i class="ph ph-arrow-up-right"></i>
       </button>
-      <button class="tool-btn" data-tool="text" title="Text">
-        <span>T</span>
+      <button class="tool-btn" data-tool="text" title="Text (T)">
+        <i class="ph ph-text-t"></i>
       </button>
     </div>
-    <div class="toolbar-divider"></div>
-    <div class="toolbar-group">
-      <input type="color" id="colorPicker" value="#ff3b3b" title="Color">
-      <select id="strokeWidth" title="Stroke width">
-        <option value="2">Thin</option>
-        <option value="3" selected>Medium</option>
-        <option value="5">Thick</option>
-      </select>
+
+    <div class="toolbar-sep"></div>
+
+    <div class="toolbar-group style-group">
+      <div class="color-wrap" title="Color">
+        <input type="color" id="colorPicker" value="#ff3b3b">
+        <div class="color-preview" id="colorPreview"></div>
+      </div>
+      <div class="stroke-wrap">
+        <select id="strokeWidth" title="Stroke width">
+          <option value="2">Thin</option>
+          <option value="3" selected>Medium</option>
+          <option value="5">Bold</option>
+        </select>
+      </div>
     </div>
-    <div class="toolbar-divider"></div>
+
+    <div class="toolbar-sep"></div>
+
     <div class="toolbar-group">
-      <button class="tool-btn" id="undoBtn" title="Undo">↩</button>
-      <button class="tool-btn" id="clearBtn" title="Clear All">✕</button>
-      <button class="tool-btn" id="deleteBtn" title="Delete Selected">🗑</button>
+      <button class="tool-btn" id="undoBtn" title="Undo (Ctrl+Z)">
+        <i class="ph ph-arrow-counter-clockwise"></i>
+      </button>
+      <button class="tool-btn danger" id="deleteBtn" title="Delete Selected (Del)">
+        <i class="ph ph-trash"></i>
+      </button>
+      <button class="tool-btn danger" id="clearBtn" title="Clear All">
+        <i class="ph ph-x-circle"></i>
+      </button>
     </div>
+
     <div class="toolbar-spacer"></div>
-    <div class="toolbar-group">
-      <button class="action-btn cancel" id="cancelBtn">Cancel</button>
-      <button class="action-btn send" id="sendBtn">📤 Send to OpenClaw</button>
+
+    <div class="toolbar-group actions">
+      <button class="action-btn cancel" id="cancelBtn">
+        <i class="ph ph-x" style="font-size:14px"></i>
+        Cancel
+      </button>
+      <button class="action-btn send" id="sendBtn">
+        <i class="ph ph-paper-plane-tilt" style="font-size:14px"></i>
+        Send to OpenClaw
+      </button>
     </div>
   </div>
 
   <!-- Notes panel -->
   <div id="notesPanel">
-    <div class="notes-header">
-      <span>Notes (optional)</span>
-      <button id="voiceBtn" class="voice-btn" title="Voice-to-text">🎤</button>
+    <div class="notes-row">
+      <div class="notes-label">
+        <i class="ph ph-note-pencil" style="font-size:14px"></i>
+        Notes
+      </div>
+      <button id="voiceBtn" class="voice-btn" title="Voice-to-text">
+        <i class="ph ph-microphone" style="font-size:14px"></i>
+      </button>
     </div>
-    <textarea id="notesInput" placeholder="Describe what you want changed..."></textarea>
+    <textarea id="notesInput" placeholder="Describe what you need..."></textarea>
     <div id="voiceStatus" class="voice-status"></div>
   </div>
 

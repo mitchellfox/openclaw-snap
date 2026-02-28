@@ -75,6 +75,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('colorPicker').addEventListener('input', (e) => {
     currentColor = e.target.value;
+    const preview = document.getElementById('colorPreview');
+    if (preview) preview.style.background = currentColor;
   });
   document.getElementById('strokeWidth').addEventListener('change', (e) => {
     currentStrokeWidth = parseInt(e.target.value);

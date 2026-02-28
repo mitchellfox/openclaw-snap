@@ -3,74 +3,231 @@
 <head>
   <meta charset="utf-8">
   <title>OpenClaw Snap — Settings</title>
+  <link rel="stylesheet" href="lib/phosphor.css">
   <style>
+    :root {
+      --bg-primary: #0f0f14;
+      --bg-surface: #16161e;
+      --bg-elevated: #1c1c27;
+      --bg-hover: #22222f;
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --border-focus: #6c63ff;
+      --text-primary: #ececf1;
+      --text-secondary: #8e8ea0;
+      --text-tertiary: #565669;
+      --accent: #6c63ff;
+      --accent-hover: #7c74ff;
+      --accent-glow: rgba(108,99,255,0.15);
+      --success: #34d399;
+      --success-bg: rgba(52,211,153,0.08);
+      --error: #f87171;
+      --error-bg: rgba(248,113,113,0.08);
+      --radius: 10px;
+      --radius-lg: 14px;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #1a1a2e;
-      color: #e0e0e0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      padding: 40px 20px;
+      padding: 48px 24px;
+      -webkit-font-smoothing: antialiased;
     }
-    .container { max-width: 520px; width: 100%; }
-    h1 { font-size: 20px; margin-bottom: 8px; color: #fff; }
-    p.subtitle { font-size: 13px; color: #888; margin-bottom: 24px; }
+
+    .container { max-width: 480px; width: 100%; }
+
+    /* Header */
+    .page-header {
+      margin-bottom: 32px;
+    }
+    .page-header .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent-glow);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+    }
+    .page-header h1 {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .page-header p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Card sections */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      color: var(--text-secondary);
+    }
+    .card-header h2 {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+
+    /* Fields */
     .field { margin-bottom: 16px; }
+    .field:last-child { margin-bottom: 0; }
     .row { display: flex; gap: 12px; }
     .row .field { flex: 1; }
-    .row .field.small { flex: 0 0 120px; }
+    .row .field.small { flex: 0 0 110px; }
+
     label {
-      display: block; font-size: 12px; font-weight: 600; color: #aaa;
-      margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
     }
+
     input {
-      width: 100%; padding: 10px 12px; background: #252545;
-      border: 1px solid #333; border-radius: 8px; color: #e0e0e0;
-      font-size: 14px; font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
-    input:focus { outline: none; border-color: #4040a0; }
-    .hint { font-size: 11px; color: #666; margin-top: 4px; }
-    .hint code { background: #252545; padding: 1px 4px; border-radius: 3px; font-size: 10px; }
+    input::placeholder { color: var(--text-tertiary); }
+    input:hover { border-color: var(--border-hover); }
+    input:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+    .hint code {
+      font-family: 'SF Mono', 'Consolas', monospace;
+      background: var(--bg-elevated);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    /* Buttons */
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 24px;
+    }
     .btn {
-      padding: 10px 20px; border: none; border-radius: 8px;
-      font-size: 14px; font-weight: 600; cursor: pointer;
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
     }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-save { background: #4ade80; color: #111; }
-    .btn-save:hover:not(:disabled) { background: #22c55e; }
-    .btn-test { background: #4040a0; color: #fff; margin-left: 8px; }
-    .btn-test:hover:not(:disabled) { background: #5050c0; }
-    .actions { display: flex; gap: 8px; margin-top: 20px; }
-    .section {
-      border: 1px solid #2a2a4a; border-radius: 12px;
-      padding: 20px; margin-bottom: 20px; background: #16162e;
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn:active:not(:disabled) { transform: scale(0.98); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
     }
-    .section h2 { font-size: 14px; color: #fff; margin-bottom: 16px; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+    .btn-secondary {
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    /* Status toast */
     #statusMsg {
-      margin-top: 12px; padding: 8px 12px; border-radius: 6px;
-      font-size: 13px; display: none;
+      margin-top: 16px;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      display: none;
+      align-items: center;
+      gap: 8px;
     }
-    .success { display: block !important; background: #1a3a2a; color: #4ade80; }
-    .err { display: block !important; background: #3a1a1a; color: #f87171; }
-    .info-box {
-      background: #1a1a3a; border: 1px solid #2a2a5a; border-radius: 8px;
-      padding: 12px; font-size: 12px; color: #999; line-height: 1.6;
+    .success {
+      display: flex !important;
+      background: var(--success-bg);
+      color: var(--success);
+      border: 1px solid rgba(52,211,153,0.12);
     }
-    .info-box strong { color: #ccc; }
+    .err {
+      display: flex !important;
+      background: var(--error-bg);
+      color: var(--error);
+      border: 1px solid rgba(248,113,113,0.12);
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📸 OpenClaw Snap Settings</h1>
-    <p class="subtitle">Connect to your OpenClaw gateway to send contextual screenshots to your agent.</p>
+    <div class="page-header">
+      <div class="logo-row">
+        <div class="logo-icon">
+          <i class="ph ph-aperture" style="font-size:22px"></i>
+        </div>
+        <h1>Settings</h1>
+      </div>
+      <p>Connect to your OpenClaw gateway to send screenshots to your agent.</p>
+    </div>
 
-    <div class="section">
-      <h2>🔌 Gateway Connection</h2>
+    <div class="card">
+      <div class="card-header">
+        <i class="ph ph-plug" style="font-size:16px"></i>
+        <h2>Gateway Connection</h2>
+      </div>
       <div class="row">
         <div class="field">
-          <label>Gateway Host</label>
+          <label>Host</label>
           <input type="text" id="gatewayHost" placeholder="localhost" value="localhost">
         </div>
         <div class="field small">
@@ -79,15 +236,21 @@
         </div>
       </div>
       <div class="field">
-        <label>Gateway Token</label>
-        <input type="password" id="gatewayToken" placeholder="Enter your gateway token">
+        <label>Token</label>
+        <input type="password" id="gatewayToken" placeholder="Your gateway auth token">
         <div class="hint">Found in <code>openclaw.json</code> → <code>gateway.auth.token</code></div>
       </div>
     </div>
 
     <div class="actions">
-      <button class="btn btn-save" id="saveBtn">💾 Save & Setup</button>
-      <button class="btn btn-test" id="testBtn">🔌 Test Connection</button>
+      <button class="btn btn-primary" id="saveBtn">
+        <i class="ph ph-floppy-disk" style="font-size:16px"></i>
+        Save & Setup
+      </button>
+      <button class="btn btn-secondary" id="testBtn">
+        <i class="ph ph-plugs-connected" style="font-size:16px"></i>
+        Test Connection
+      </button>
     </div>
 
     <div id="statusMsg"></div>

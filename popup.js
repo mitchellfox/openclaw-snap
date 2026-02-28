@@ -29,8 +29,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Connection status
   if (config.gatewayHost && config.gatewayToken && (config.channelId || channels.length > 0)) {
-    statusEl.className = 'status connected';
-    statusEl.textContent = '✅ Ready';
+    statusEl.className = 'status-bar ready';
+    statusEl.innerHTML = '<i class="ph ph-check-circle" style="font-size:14px"></i> Ready';
   }
 
   // Capture visible tab
